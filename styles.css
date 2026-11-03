@@ -1,0 +1,459 @@
+/* ============================================================
+   Networking Address Bible — CLI Terminal + Patch Panel world
+   Palette: phosphor-dark ground, terminal green/amber/red,
+   cool white text, dim gray comments.
+   Type: monospace for data, system sans for UI chrome.
+   ============================================================ */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* Ground: near-black with a slight blue cast — CRT phosphor */
+  --bg:#0a0e14;
+  --surface:#111820;
+  --surface2:#1a2330;
+  --border:#2a3544;
+  --border-bright:#3d4f63;
+
+  /* Text: cool white primary, dim gray for comments */
+  --text:#d4dae4;
+  --text2:#93a1b3;
+  --text-dim:#8a97a8;
+
+  /* Terminal signals */
+  --green:#00e676;
+  --green-dim:#004d25;
+  --amber:#ffb300;
+  --amber-dim:#4d3800;
+  --red:#ff5252;
+  --red-dim:#4d1515;
+  --cyan:#00e5ff;
+  --blue:#448aff;
+
+  /* Link lights (patch panel) */
+  --led-green:#00e676;
+  --led-amber:#ffb300;
+  --led-red:#ff5252;
+  --led-off:#2a3544;
+
+  /* Terminal palette for configs */
+  --term-bg:#0d1117;
+  --term-green:#7ee787;
+  --term-blue:#79c0ff;
+  --term-yellow:#e3b341;
+  --term-comment:#6e7681;
+}
+
+/* ---------- Base ---------- */
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+  /* Subtle scanline texture */
+  background-image:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,.008) 2px,
+    rgba(255,255,255,.008) 4px
+  );
+}
+
+.container{max-width:1240px;margin:0 auto;padding:16px 20px}
+
+/* ---------- Header: terminal title bar ---------- */
+header{
+  padding:16px 0 12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:20px;
+}
+header h1{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:1.35rem;
+  font-weight:700;
+  color:var(--green);
+  letter-spacing:-.02em;
+}
+header h1 .prompt{color:var(--text-dim);user-select:none}
+header p{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  color:var(--text-dim);
+  font-size:.8rem;
+  margin-top:4px;
+}
+header .sep{
+  color:var(--text-dim);
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.8rem;
+  margin-top:6px;
+  overflow:hidden;
+  white-space:nowrap;
+  opacity:.4;
+}
+
+/* ---------- Tabs: patch-panel port labels ---------- */
+.tabs{
+  display:flex;
+  gap:2px;
+  margin-bottom:0;
+  flex-wrap:wrap;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:6px 6px 0 0;
+  padding:4px 4px 0;
+}
+.tab{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 14px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:4px 4px 0 0;
+  cursor:pointer;
+  color:var(--text2);
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.78rem;
+  font-weight:600;
+  letter-spacing:.02em;
+  transition:all .15s;
+  position:relative;
+  top:1px;
+  user-select:none;
+}
+.tab::before{
+  content:'';
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--led-off);
+  flex-shrink:0;
+  transition:background .15s;
+}
+.tab:hover{background:var(--surface);color:var(--text)}
+.tab.active{
+  background:var(--bg);
+  color:var(--green);
+  border-color:var(--border-bright);
+  border-bottom:1px solid var(--bg);
+}
+.tab.active::before{background:var(--led-green);box-shadow:0 0 4px var(--led-green)}
+
+/* ---------- Panels ---------- */
+.panel{
+  display:none;
+  background:var(--bg);
+  border:1px solid var(--border-bright);
+  border-radius:0 0 6px 6px;
+  padding:24px;
+}
+.panel.active{display:block}
+
+@media(prefers-reduced-motion:no-preference){
+  .panel.active{animation:fadeIn .2s ease-out}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+}
+
+/* ---------- Typography ---------- */
+h2{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--green);
+  margin-bottom:4px;
+}
+h2::before{content:'! ';color:var(--text-dim)}
+h3{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.9rem;
+  font-weight:600;
+  color:var(--cyan);
+  margin:20px 0 8px;
+}
+h3::before{content:'> ';color:var(--text-dim)}
+label{
+  display:block;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.78rem;
+  color:var(--text2);
+  margin-bottom:4px;
+  margin-top:10px;
+  letter-spacing:.02em;
+}
+
+/* ---------- Inputs: terminal prompt style ---------- */
+input,select,textarea{
+  width:100%;
+  padding:8px 10px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  color:var(--text);
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.88rem;
+  transition:border-color .15s;
+}
+input::placeholder,textarea::placeholder{color:var(--text-dim)}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:var(--green);
+  box-shadow:0 0 0 2px rgba(0,230,118,.15);
+}
+textarea{resize:vertical;min-height:70px}
+select{
+  cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8899'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 8px center;
+  padding-right:24px;
+}
+
+/* ---------- Buttons: terminal commands ---------- */
+.btn{
+  padding:8px 16px;
+  border:1px solid var(--border-bright);
+  border-radius:3px;
+  cursor:pointer;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-weight:600;
+  font-size:.82rem;
+  letter-spacing:.02em;
+  transition:all .15s;
+}
+.btn-primary{
+  background:var(--green-dim);
+  color:var(--green);
+  border-color:var(--green);
+}
+.btn-primary:hover{background:var(--green);color:var(--bg)}
+.btn-green{
+  background:var(--green-dim);
+  color:var(--green);
+  border-color:var(--green);
+}
+.btn-green:hover{background:var(--green);color:var(--bg)}
+.btn-yellow{
+  background:var(--amber-dim);
+  color:var(--amber);
+  border-color:var(--amber);
+}
+.btn-yellow:hover{background:var(--amber);color:var(--bg)}
+.btn-red{
+  background:var(--red-dim);
+  color:var(--red);
+  border-color:var(--red);
+}
+.btn-red:hover{background:var(--red);color:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.btn-group{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+/* ---------- Layout grids ---------- */
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ---------- Tables: patch-panel label strips ---------- */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin:12px 0;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.82rem;
+}
+th{
+  background:var(--surface2);
+  color:var(--cyan);
+  padding:8px 10px;
+  text-align:left;
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  border-bottom:2px solid var(--border-bright);
+  white-space:nowrap;
+}
+td{
+  padding:7px 10px;
+  border-bottom:1px solid var(--border);
+  font-size:.82rem;
+}
+tr:hover td{background:rgba(0,230,118,.03)}
+
+/* Status LED in tables */
+.led{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.led-green{background:var(--led-green);box-shadow:0 0 4px var(--led-green)}
+.led-amber{background:var(--led-amber);box-shadow:0 0 4px var(--led-amber)}
+.led-red{background:var(--led-red);box-shadow:0 0 4px var(--led-red)}
+.led-off{background:var(--led-off)}
+
+.vlsm-net-sel{
+  width:auto;min-width:150px;
+  padding:4px 6px;font-size:.78rem;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  background:var(--surface);color:var(--cyan);
+  border:1px solid var(--border);border-radius:3px;cursor:pointer;
+}
+
+/* Usage bars */
+.net-usage-bar{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:.78rem;font-family:'Consolas','SF Mono','Courier New',monospace}
+.net-usage-bar .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:2px;overflow:hidden;min-width:80px}
+.net-usage-bar .bar-fill{height:100%;border-radius:2px;transition:width .3s}
+.net-usage-bar .bar-label{white-space:nowrap;min-width:130px;color:var(--text2)}
+.net-usage-bar .bar-pct{min-width:45px;text-align:right;color:var(--text2)}
+
+/* ---------- Result boxes: terminal output panes ---------- */
+.result-box{
+  background:var(--term-bg);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:14px 16px;
+  margin:12px 0;
+}
+.result-box h4{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  color:var(--term-blue);
+  margin-bottom:8px;
+  font-size:.85rem;
+  font-weight:600;
+}
+.result-box h4::before{content:'$ ';color:var(--text-dim)}
+.result-box h3.rb-title{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  color:var(--term-blue);
+  margin-bottom:8px;
+  font-size:.85rem;
+  font-weight:600;
+}
+.result-box h3.rb-title::before{content:'$ ';color:var(--text-dim)}
+.topo-card h3.rb-title{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  color:var(--cyan);
+  font-size:.85rem;
+  font-weight:600;
+  margin:0;
+}
+.topo-card h3.rb-title::before{content:'';}
+.result-box pre{
+  white-space:pre-wrap;
+  word-break:break-all;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.8rem;
+  line-height:1.55;
+  color:var(--term-green);
+}
+.result-box p{font-size:.85rem}
+
+/* ---------- Tags: link-light badges ---------- */
+.tag{
+  display:inline-block;
+  padding:1px 7px;
+  border-radius:2px;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.03em;
+  border:1px solid;
+}
+.tag-green{background:var(--green-dim);color:var(--green);border-color:var(--green)}
+.tag-yellow{background:var(--amber-dim);color:var(--amber);border-color:var(--amber)}
+.tag-blue{background:rgba(68,138,255,.12);color:var(--blue);border-color:var(--blue)}
+.tag-purple{background:rgba(168,85,247,.12);color:#c084fc;border-color:#c084fc}
+.tag-red{background:var(--red-dim);color:var(--red);border-color:var(--red)}
+
+/* ---------- Topology cards: patch-panel port entries ---------- */
+.topo-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--border-bright);
+  border-radius:3px;
+  padding:10px 14px;
+  margin:6px 0;
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  font-size:.82rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.topo-card:hover{border-left-color:var(--green)}
+.remove-btn{
+  background:none;border:none;
+  color:var(--red);cursor:pointer;
+  font-size:1rem;padding:2px 6px;
+  font-family:monospace;
+}
+.remove-btn:hover{color:#ff8a8a;background:var(--red-dim)}
+
+/* ---------- Subnet rows ---------- */
+.subnet-row{
+  display:grid;
+  grid-template-columns:1fr 80px 100px 100px;
+  gap:8px;align-items:end;margin:6px 0;
+}
+.subnet-row input,.subnet-row select{padding:5px 7px;font-size:.8rem}
+@media(max-width:768px){.subnet-row{grid-template-columns:1fr 1fr}}
+
+/* ---------- Utility ---------- */
+.mono{font-family:'Consolas','SF Mono','Courier New',monospace;font-size:.82rem}
+.hidden{display:none}
+.field-error-msg{color:var(--red);font-size:.72rem;margin-top:2px;font-family:'Consolas','SF Mono','Courier New',monospace}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.7);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+}
+.modal{
+  background:var(--surface);
+  border:1px solid var(--border-bright);
+  border-radius:6px;
+  padding:24px;
+  min-width:400px;max-width:600px;
+}
+.modal h3{
+  font-family:'Consolas','SF Mono','Courier New',monospace;
+  color:var(--green);margin-bottom:16px;
+}
+.modal h3::before{content:'> '}
+.modal .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.modal .modal-row.full{grid-template-columns:1fr}
+.modal .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* ---------- Responsive ---------- */
+@media(max-width:640px){
+  .container{padding:10px}
+  .tabs{gap:1px;padding:3px 3px 0}
+  .tab{padding:6px 8px;font-size:.7rem}
+  .panel{padding:16px}
+  header h1{font-size:1.1rem}
+}
+
+/* ---------- Reduced motion ---------- */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+  }
+}
+
+/* ---------- Focus visibility (keyboard) ---------- */
+:focus-visible{
+  outline:2px solid var(--green);
+  outline-offset:2px;
+}
+.tab:focus-visible{outline-offset:-2px}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-bright)}
+
+/* ---------- Selection ---------- */
+::selection{background:var(--green-dim);color:var(--green)}
